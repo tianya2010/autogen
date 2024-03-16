@@ -37,7 +37,6 @@ const SkillsView = ({}: any) => {
   const serverUrl = getServerUrl();
   const listSkillsUrl = `${serverUrl}/skills?user_id=${user?.email}`;
   const saveSkillsUrl = `${serverUrl}/skills`;
-  const deleteSkillsUrl = `${serverUrl}/skills/delete`;
 
   const [skills, setSkills] = React.useState<ISkill[] | null>([]);
   const [selectedSkill, setSelectedSkill] = React.useState<any>(null);
@@ -52,6 +51,7 @@ const SkillsView = ({}: any) => {
     setError(null);
     setLoading(true);
     // const fetch;
+    const deleteSkillUrl = `${serverUrl}/skills/delete?user_id=${user?.email}&skill_id=${skill.id}`;
     const payLoad = {
       method: "DELETE",
       headers: {
@@ -77,7 +77,7 @@ const SkillsView = ({}: any) => {
       message.error(err.message);
       setLoading(false);
     };
-    fetchJSON(deleteSkillsUrl, payLoad, onSuccess, onError);
+    fetchJSON(deleteSkillUrl, payLoad, onSuccess, onError);
   };
 
   const fetchSkills = () => {
@@ -94,7 +94,7 @@ const SkillsView = ({}: any) => {
     const onSuccess = (data: any) => {
       if (data && data.status) {
         // message.success(data.message);
-        // console.log("skills", data.data);
+        console.log("skills", data.data);
         setSkills(data.data);
       } else {
         message.error(data.message);
@@ -113,16 +113,14 @@ const SkillsView = ({}: any) => {
     setError(null);
     setLoading(true);
     // const fetch;
+    skill.user_id = user?.email;
     const payLoad = {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user_id: user?.email,
-        skill: skill,
-      }),
+      body: JSON.stringify(skill),
     };
 
     const onSuccess = (data: any) => {
@@ -178,7 +176,6 @@ const SkillsView = ({}: any) => {
           let newSkill = { ...skill };
           newSkill.title = `${skill.title} Copy`;
           newSkill.user_id = user?.email;
-          newSkill.timestamp = new Date().toISOString();
           if (newSkill.id) {
             delete newSkill.id;
           }
@@ -211,9 +208,11 @@ const SkillsView = ({}: any) => {
           >
             <div style={{ minHeight: "65px" }} className="my-2   break-words">
               {" "}
-              {truncateText(skill.content, 70)}
+              {skill.description
+                ? truncateText(skill.description || "", 70)
+                : truncateText(skill.content || "", 70)}
             </div>
-            <div className="text-xs">{timeAgo(skill.timestamp || "")}</div>
+            <div className="text-xs">{timeAgo(skill.updated_at || "")}</div>
             <CardHoverBar items={cardItems} />
           </Card>
           <div className="text-right mt-2"></div>
