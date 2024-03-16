@@ -211,6 +211,23 @@ async def create_model(model: Model):
     return create_entity(model, Model)
 
 
+@api.post("/models/test")
+async def test_model_endpoint(model: Model):
+    """ Test a model"""
+    try:
+        response = test_model(model)
+        return {
+            "status": True,
+            "message": "Model tested successfully",
+            "data": response,
+        }
+    except (OpenAIError, Exception) as ex_error:
+        return {
+            "status": False,
+            "message": "Error occurred while testing model: " + str(ex_error),
+        }
+
+
 @api.delete("/models/delete")
 async def delete_model(model_id: int, user_id: str):
     """ Delete a model"""

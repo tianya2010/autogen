@@ -1,5 +1,6 @@
+from enum import Enum
 from typing import Any, Callable, Dict, Literal, Optional, Union, List
-from sqlmodel import JSON, Column, DateTime, Field, SQLModel, func, Relationship
+from sqlmodel import JSON, Column, DateTime, Field, SQLModel, func, Relationship, Enum as SqlEnum
 from datetime import datetime
 
 
@@ -93,6 +94,12 @@ class AgentConfig(SQLModel, table=False):
     description: Optional[str] = None
 
 
+class AgentType(str, Enum):
+    assistant = "assistant"
+    userproxy = "userproxy"
+    groupchat = "groupchat"
+
+
 class Agent(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default=datetime.now(), sa_column=Column(
@@ -100,7 +107,8 @@ class Agent(SQLModel, table=True):
     updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
         DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
     user_id: Optional[str] = None
-    type: str = Field(default_factory=Literal["assistant", "userproxy"])
+    type: AgentType = Field(default=AgentType.assistant,
+                            sa_column=Column(SqlEnum(AgentType)))
     config: AgentConfig = Field(
         default_factory=AgentConfig, sa_column=Column(JSON))
     skills: List[Skill] = Relationship(
@@ -120,13 +128,24 @@ class GroupChatConfig(SQLModel, table=False):
 
 
 class GroupChat(SQLModel, table=False):
-    type: Literal["groupchat"]
+    type: str = "groupchat"
     config: AgentConfig = Field(
         default_factory=AgentConfig, sa_column=Column(JSON))
     groupchat_config: Optional[GroupChatConfig] = Field(
         default_factory=GroupChatConfig, sa_column=Column(JSON))
     skills: Optional[List[Skill]] = Field(
         default_factory=list, sa_column=Column(JSON))
+
+
+class WorkFlowType(str, Enum):
+    twoagents = "twoagents"
+    groupchat = "groupchat"
+
+
+class WorkFlowSummaryMethod(str, Enum):
+    last = "last"
+    none = "none"
+    llm = "llm"
 
 
 class Workflow(SQLModel, table=True):
@@ -141,6 +160,8 @@ class Workflow(SQLModel, table=True):
     sender: Agent = Field(default_factory=Agent, sa_column=Column(JSON))
     receiver: Union[Agent, GroupChat] = Field(
         default_factory=Union[Agent, GroupChat], sa_column=Column(JSON))
-    type: str = Field(default_factory=Literal["twoagents", "groupchat"])
+    type: WorkFlowType = Field(default=WorkFlowType.twoagents,
+                               sa_column=Column(SqlEnum(WorkFlowType)))
     # summary_method: Optional[Literal["last", "none", "llm"]] = "last"
-    summary_method: str = Field(default_factory=Literal["last", "none", "llm"])
+    summary_method: Optional[WorkFlowSummaryMethod] = Field(
+        default=WorkFlowSummaryMethod.last, sa_column=Column(SqlEnum(WorkFlowSummaryMethod)))

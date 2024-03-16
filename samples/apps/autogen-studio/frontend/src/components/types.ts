@@ -2,11 +2,10 @@ export type NotificationType = "success" | "info" | "warning" | "error";
 
 export interface IMessage {
   user_id: string;
-  root_msg_id: string;
-  msg_id?: string;
   role: string;
   content: string;
-  timestamp?: string;
+  created_at: string;
+  updated_at: string;
   personalize?: boolean;
   ra?: string;
   session_id?: string;
@@ -47,7 +46,8 @@ export interface IAgentConfig {
 export interface IAgentFlowSpec {
   type: "assistant" | "userproxy" | "groupchat";
   config: IAgentConfig;
-  timestamp?: string;
+  created_at?: string;
+  updated_at?: string;
   id?: string;
   skills?: Array<ISkill>;
   user_id?: string;
@@ -67,7 +67,8 @@ export interface IGroupChatFlowSpec {
   config: IAgentConfig;
   groupchat_config: IGroupChatConfig;
   id?: string;
-  timestamp?: string;
+  created_at?: string;
+  updated_at?: string;
   user_id?: string;
   description?: string;
 }
@@ -78,7 +79,8 @@ export interface IFlowConfig {
   sender: IAgentFlowSpec;
   receiver: IAgentFlowSpec | IGroupChatFlowSpec;
   type: "twoagents" | "groupchat";
-  timestamp?: string;
+  created_at?: string;
+  updated_at?: string;
   summary_method?: "none" | "last" | "llm";
   id?: string;
   user_id?: string;
@@ -91,7 +93,8 @@ export interface IModelConfig {
   base_url?: string;
   api_type?: string;
   user_id?: string;
-  timestamp?: string;
+  created_at?: string;
+  updated_at?: string;
   description?: string;
   id?: string;
 }
@@ -107,7 +110,8 @@ export interface IMetadataFile {
 export interface IChatSession {
   id: string;
   user_id: string;
-  timestamp: string;
+  created_at: string;
+  updated_at: string;
   flow_config: IFlowConfig;
   name: string;
 }
@@ -117,7 +121,8 @@ export interface IGalleryItem {
   messages: Array<IMessage>;
   session: IChatSession;
   tags: Array<string>;
-  timestamp: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ISkill {

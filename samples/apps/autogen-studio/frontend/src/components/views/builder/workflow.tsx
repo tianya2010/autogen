@@ -40,7 +40,6 @@ const WorkflowView = ({}: any) => {
   const serverUrl = getServerUrl();
   const listWorkflowsUrl = `${serverUrl}/workflows?user_id=${user?.email}`;
   const saveWorkflowsUrl = `${serverUrl}/workflows`;
-  const deleteWorkflowsUrl = `${serverUrl}/workflows/delete`;
 
   const [workflows, setWorkflows] = React.useState<IFlowConfig[] | null>([]);
   const [selectedWorkflow, setSelectedWorkflow] =
@@ -87,6 +86,7 @@ const WorkflowView = ({}: any) => {
     setError(null);
     setLoading(true);
     // const fetch;
+    const deleteWorkflowsUrl = `${serverUrl}/workflows/delete?user_id=${user?.email}&workflow_id=${workflow.id}`;
     const payLoad = {
       method: "DELETE",
       headers: {
@@ -119,22 +119,20 @@ const WorkflowView = ({}: any) => {
     setError(null);
     setLoading(true);
     // const fetch;
+
+    workflow.user_id = user?.email;
     const payLoad = {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user_id: user?.email,
-        workflow: workflow,
-      }),
+      body: JSON.stringify(workflow),
     };
 
     const onSuccess = (data: any) => {
       if (data && data.status) {
         message.success(data.message);
-        // console.log("workflows", data.data);
         setWorkflows(data.data);
       } else {
         message.error(data.message);
@@ -191,7 +189,6 @@ const WorkflowView = ({}: any) => {
             let newWorkflow = { ...workflow };
             newWorkflow.name = `${workflow.name} Copy`;
             newWorkflow.user_id = user?.email;
-            newWorkflow.timestamp = new Date().toISOString();
             if (newWorkflow.id) {
               delete newWorkflow.id;
             }
@@ -232,7 +229,9 @@ const WorkflowView = ({}: any) => {
                 {" "}
                 {truncateText(workflow.description, 70)}
               </div>
-              <div className="text-xs">{timeAgo(workflow.timestamp || "")}</div>
+              <div className="text-xs">
+                {timeAgo(workflow.updated_at || "")}
+              </div>
 
               <CardHoverBar items={cardItems} />
             </Card>

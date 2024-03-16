@@ -38,7 +38,6 @@ const AgentsView = ({}: any) => {
   const serverUrl = getServerUrl();
   const listAgentsUrl = `${serverUrl}/agents?user_id=${user?.email}`;
   const saveAgentsUrl = `${serverUrl}/agents`;
-  const deleteAgentUrl = `${serverUrl}/agents/delete`;
 
   const [agents, setAgents] = React.useState<IAgentFlowSpec[] | null>([]);
   const [selectedAgent, setSelectedAgent] =
@@ -56,6 +55,8 @@ const AgentsView = ({}: any) => {
   const deleteAgent = (agent: IAgentFlowSpec) => {
     setError(null);
     setLoading(true);
+
+    const deleteAgentUrl = `${serverUrl}/agents/delete?user_id=${user?.email}&agent_id=${agent.id}`;
     // const fetch;
     const payLoad = {
       method: "DELETE",
@@ -119,17 +120,18 @@ const AgentsView = ({}: any) => {
     setLoading(true);
     // const fetch;
 
+    agent.user_id = user?.email;
+
     const payLoad = {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user_id: user?.email,
-        agent: agent,
-      }),
+      body: JSON.stringify(agent),
     };
+
+    console.log("saving agent", agent);
 
     const onSuccess = (data: any) => {
       if (data && data.status) {
@@ -185,7 +187,7 @@ const AgentsView = ({}: any) => {
           let newAgent = { ...agent };
           newAgent.config.name = `${agent.config.name}_copy`;
           newAgent.user_id = user?.email;
-          newAgent.timestamp = new Date().toISOString();
+          newAgent.updated_at = new Date().toISOString();
           if (newAgent.id) {
             delete newAgent.id;
           }
@@ -222,7 +224,7 @@ const AgentsView = ({}: any) => {
               {" "}
               {truncateText(agent.config.description || "", 70)}
             </div>
-            <div className="text-xs">{timeAgo(agent.timestamp || "")}</div>
+            <div className="text-xs">{timeAgo(agent.updated_at || "")}</div>
             <CardHoverBar items={cardItems} />
           </Card>
         </div>

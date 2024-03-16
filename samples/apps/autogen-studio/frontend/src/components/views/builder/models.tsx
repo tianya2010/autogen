@@ -32,7 +32,6 @@ const ModelsView = ({}: any) => {
   const serverUrl = getServerUrl();
   const listModelsUrl = `${serverUrl}/models?user_id=${user?.email}`;
   const saveModelsUrl = `${serverUrl}/models`;
-  const deleteModelUrl = `${serverUrl}/models/delete`;
   const testModelUrl = `${serverUrl}/models/test`;
 
   const defaultModel: IModelConfig = {
@@ -56,16 +55,12 @@ const ModelsView = ({}: any) => {
   const deleteModel = (model: IModelConfig) => {
     setError(null);
     setLoading(true);
-    // const fetch;
+    const deleteModelUrl = `${serverUrl}/models/delete?user_id=${user?.email}&model_id=${model.id}`;
     const payLoad = {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user_id: user?.email,
-        model: model,
-      }),
     };
 
     const onSuccess = (data: any) => {
@@ -114,6 +109,7 @@ const ModelsView = ({}: any) => {
   const saveModel = (model: IModelConfig) => {
     setError(null);
     setLoading(true);
+    model.user_id = user?.email;
 
     const payLoad = {
       method: "POST",
@@ -121,10 +117,7 @@ const ModelsView = ({}: any) => {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user_id: user?.email,
-        model: model,
-      }),
+      body: JSON.stringify(model),
     };
 
     const onSuccess = (data: any) => {
@@ -180,7 +173,7 @@ const ModelsView = ({}: any) => {
           let newModel = { ...model };
           newModel.model = `${model.model} Copy`;
           newModel.user_id = user?.email;
-          newModel.timestamp = new Date().toISOString();
+          newModel.updated_at = new Date().toISOString();
           if (newModel.id) {
             delete newModel.id;
           }
@@ -216,7 +209,7 @@ const ModelsView = ({}: any) => {
               {" "}
               {truncateText(model.description || model.model || "", 70)}
             </div>
-            <div className="text-xs">{timeAgo(model.timestamp || "")}</div>
+            <div className="text-xs">{timeAgo(model.updated_at || "")}</div>
             <CardHoverBar items={cardItems} />
           </Card>
         </div>
@@ -246,15 +239,13 @@ const ModelsView = ({}: any) => {
     const testModel = (model: IModelConfig) => {
       setModelStatus(null);
       setLoadingModelTest(true);
+      model.user_id = user?.email;
       const payLoad = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          user_id: user?.email,
-          model: model,
-        }),
+        body: JSON.stringify(model),
       };
 
       const onSuccess = (data: any) => {
