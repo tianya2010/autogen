@@ -30,7 +30,7 @@ dependencies = [
     "numpy < 2.0.0",
     "sqlmodel"
 ]
-optional-dependencies = {web = ["fastapi", "uvicorn"]}
+optional-dependencies = {web = ["fastapi", "uvicorn"], database = ["psycopg2"]}
 
 dynamic = ["version"]
 
