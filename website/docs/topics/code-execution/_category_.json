@@ -1,5 +1,8 @@
 {
     "position": 2,
     "label": "Code Execution",
-    "collapsible": true
+    "collapsible": true,
+    {
+       "type": "generated-index"
+    }
 }
