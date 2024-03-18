@@ -15,7 +15,7 @@ from openai import OpenAIError
 from ..version import VERSION, APP_NAME
 
 
-from ..models.db import (Agent, Message, Model, Skill, Workflow)
+from ..models.db import (Agent, Message, Model, Session, Skill, Workflow)
 from ..models.dbmanager import DBManager
 from ..utils import md5_hash, init_app_folders, dbutils, test_model
 from ..chatmanager import AutoGenChatManager, WebSocketConnectionManager
@@ -186,7 +186,6 @@ async def list_skills(user_id: str):
 @api.post("/skills")
 async def create_skill(skill: Skill):
     """ Create a new skill"""
-    print("Creating skill: ", skill)
     filters = {"user_id": skill.user_id}
     return create_entity(skill, Skill, filters=filters)
 
@@ -275,6 +274,26 @@ async def delete_workflow(workflow_id: int, user_id: str):
     return delete_entity(Workflow, filters=filters)
 
 
+@api.get("/sessions")
+async def list_sessions(user_id: str):
+    """ List all sessions for a user"""
+    filters = {"user_id": user_id}
+    return list_entity(Session, filters=filters)
+
+
+@api.post("/sessions")
+async def create_session(session: Session):
+    """ Create a new session"""
+    return create_entity(session, Session)
+
+
+@api.delete("/sessions/delete")
+async def delete_session(session_id: int, user_id: str):
+    """ Delete a session"""
+    filters = {"id": session_id, "user_id": user_id}
+    return delete_entity(Session, filters=filters)
+
+
 @api.get("/messages")
 async def list_messages(user_id: str, session_id: str):
     """ List all messages for a user"""
@@ -295,7 +314,7 @@ async def create_message(message: Message):
         folders["files_static_root"], "user", md5_hash(message.user_id))
     os.makedirs(user_dir, exist_ok=True)
 
-    workflow = dbmanager.get(Workflow, filters={"id": message.workflow_id})
+    workflow = dbmanager.get(Workflow, filters={"id": message.workflow_id})[0]
 
     try:
         agent_response: Message = managers["chat"].chat(
@@ -314,7 +333,7 @@ async def create_message(message: Message):
         }
         return response
     except Exception as ex_error:
-        print(ex_error)
+        print(traceback.format_exc())
         return {
             "status": False,
             "message": f"Error occurred while processing message: " + str(ex_error),
@@ -328,3 +347,30 @@ async def get_version():
         "message": "Version retrieved successfully",
         "data": {"version": VERSION},
     }
+
+
+# websockets
+
+async def process_socket_message(data: dict, websocket: WebSocket, client_id: str):
+    print(f"Client says: {data['type']}")
+    if data["type"] == "user_message":
+        user_message = Message(**data["data"])
+        response = await create_message(user_message)
+        response_socket_message = {
+            "type": "agent_response",
+            "data": response,
+            "connection_id": client_id,
+        }
+        await websocket_manager.send_message(response_socket_message, websocket)
+
+
+@api.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await websocket_manager.connect(websocket, client_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            await process_socket_message(data, websocket, client_id)
+    except WebSocketDisconnect:
+        print(f"Client #{client_id} is disconnected")
+        await websocket_manager.disconnect(websocket)

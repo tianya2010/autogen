@@ -57,7 +57,8 @@ class AutoGenChatManager:
         """
 
         # create a working director for workflow based on user_dir/session_id/time_hash
-        work_dir = os.path.join(user_dir, message.session_id, datetime.now().strftime("%Y%m%d_%H-%M-%S"))
+        work_dir = os.path.join(user_dir, str(
+            message.session_id), datetime.now().strftime("%Y%m%d_%H-%M-%S"))
         os.makedirs(work_dir, exist_ok=True)
 
         # if no flow config is provided, use the default
@@ -114,19 +115,23 @@ class AutoGenChatManager:
 
         output = ""
         if flow_config.summary_method == "last":
-            successful_code_blocks = extract_successful_code_blocks(flow.agent_history)
+            successful_code_blocks = extract_successful_code_blocks(
+                flow.agent_history)
             last_message = flow.agent_history[-1]["message"]["content"] if flow.agent_history else ""
             successful_code_blocks = "\n\n".join(successful_code_blocks)
-            output = (last_message + "\n" + successful_code_blocks) if successful_code_blocks else last_message
+            output = (last_message + "\n" +
+                      successful_code_blocks) if successful_code_blocks else last_message
         elif flow_config.summary_method == "llm":
             model = flow.config.receiver.config.llm_config.config_list[0]
             status_message = SocketMessage(
                 type="agent_status",
-                data={"status": "summarizing", "message": "Generating summary of agent dialogue"},
+                data={"status": "summarizing",
+                      "message": "Generating summary of agent dialogue"},
                 connection_id=flow.connection_id,
             )
             self.send(status_message.dict())
-            output = summarize_chat_history(task=message_text, messages=flow.agent_history, model=model)
+            output = summarize_chat_history(
+                task=message_text, messages=flow.agent_history, model=model)
 
         elif flow_config.summary_method == "none":
             output = ""
@@ -149,7 +154,8 @@ class WebSocketConnectionManager:
         if active_connections is None:
             active_connections = []
         self.active_connections_lock = active_connections_lock
-        self.active_connections: List[Tuple[WebSocket, str]] = active_connections
+        self.active_connections: List[Tuple[WebSocket,
+                                            str]] = active_connections
 
     async def connect(self, websocket: WebSocket, client_id: str) -> None:
         """
@@ -161,7 +167,8 @@ class WebSocketConnectionManager:
         await websocket.accept()
         async with self.active_connections_lock:
             self.active_connections.append((websocket, client_id))
-            print(f"New Connection: {client_id}, Total: {len(self.active_connections)}")
+            print(
+                f"New Connection: {client_id}, Total: {len(self.active_connections)}")
 
     async def disconnect(self, websocket: WebSocket) -> None:
         """
@@ -171,8 +178,10 @@ class WebSocketConnectionManager:
         """
         async with self.active_connections_lock:
             try:
-                self.active_connections = [conn for conn in self.active_connections if conn[0] != websocket]
-                print(f"Connection Closed. Total: {len(self.active_connections)}")
+                self.active_connections = [
+                    conn for conn in self.active_connections if conn[0] != websocket]
+                print(
+                    f"Connection Closed. Total: {len(self.active_connections)}")
             except ValueError:
                 print("Error: WebSocket connection not found")
 

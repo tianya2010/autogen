@@ -162,7 +162,7 @@ const SkillsView = ({}: any) => {
             type: "application/json",
           });
           element.href = URL.createObjectURL(file);
-          element.download = `skill_${skill.title}.json`;
+          element.download = `skill_${skill.name}.json`;
           document.body.appendChild(element); // Required for this to work in FireFox
           element.click();
         },
@@ -174,7 +174,7 @@ const SkillsView = ({}: any) => {
         onClick: (e: any) => {
           e.stopPropagation();
           let newSkill = { ...skill };
-          newSkill.title = `${skill.title} Copy`;
+          newSkill.name = `${skill.name} Copy`;
           newSkill.user_id = user?.email;
           if (newSkill.id) {
             delete newSkill.id;
@@ -200,7 +200,7 @@ const SkillsView = ({}: any) => {
           {" "}
           <Card
             className="h-full p-2 cursor-pointer group"
-            title={truncateText(skill.title, 25)}
+            title={truncateText(skill.name, 25)}
             onClick={() => {
               setSelectedSkill(skill);
               setShowSkillModal(true);
@@ -241,7 +241,7 @@ const SkillsView = ({}: any) => {
         title={
           <>
             Skill Specification{" "}
-            <span className="text-accent font-normal">{localSkill?.title}</span>{" "}
+            <span className="text-accent font-normal">{localSkill?.name}</span>{" "}
           </>
         }
         width={800}
@@ -280,8 +280,8 @@ const SkillsView = ({}: any) => {
           <div style={{ minHeight: "70vh" }}>
             <div className="mb-2">
               <Input
-                placeholder="Skill Title"
-                value={localSkill.title}
+                placeholder="Skill Name"
+                value={localSkill.name}
                 onChange={(e) => {
                   const updatedSkill = { ...localSkill, title: e.target.value };
                   setLocalSkill(updatedSkill);

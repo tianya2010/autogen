@@ -4,11 +4,11 @@ export interface IMessage {
   user_id: string;
   role: string;
   content: string;
-  created_at: string;
-  updated_at: string;
-  personalize?: boolean;
-  ra?: string;
-  session_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  session_id?: number;
+  connection_id?: string;
+  workflow_id?: number;
 }
 
 export interface IStatus {
@@ -82,7 +82,7 @@ export interface IFlowConfig {
   created_at?: string;
   updated_at?: string;
   summary_method?: "none" | "last" | "llm";
-  id?: string;
+  id?: number;
   user_id?: string;
 }
 
@@ -108,16 +108,16 @@ export interface IMetadataFile {
 }
 
 export interface IChatSession {
-  id: string;
+  id?: number;
   user_id: string;
-  created_at: string;
-  updated_at: string;
-  flow_config: IFlowConfig;
+  workflow_id?: number;
+  created_at?: string;
+  updated_at?: string;
   name: string;
 }
 
 export interface IGalleryItem {
-  id: string;
+  id: number;
   messages: Array<IMessage>;
   session: IChatSession;
   tags: Array<string>;
@@ -126,7 +126,7 @@ export interface IGalleryItem {
 }
 
 export interface ISkill {
-  title: string;
+  name: string;
   content: string;
   id?: string;
   description?: string;

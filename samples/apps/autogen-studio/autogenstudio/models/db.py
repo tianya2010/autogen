@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, Literal, Optional, Union, List
 from sqlmodel import JSON, Column, DateTime, Field, SQLModel, func, Relationship, Enum as SqlEnum
 from datetime import datetime
+from sqlalchemy import orm
 
 
 class Message(SQLModel, table=True):
@@ -27,7 +28,7 @@ class Session(SQLModel, table=True):
         DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
     user_id: Optional[str] = None
     workflow_id: Optional[int] = Field(default=None, foreign_key="workflow.id")
-    title: Optional[str] = None
+    name: Optional[str] = None
     description: Optional[str] = None
 
 
@@ -52,7 +53,7 @@ class Skill(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.now, sa_column=Column(
         DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
     user_id: Optional[str] = None
-    title: str
+    name: str
     content: str
     description: Optional[str] = None
     secrets: Optional[Dict] = Field(default={}, sa_column=Column(JSON))
@@ -83,7 +84,7 @@ class Model(SQLModel, table=True):
 
 
 class AgentConfig(SQLModel, table=False):
-    name: str
+    name: Optional[str] = None
     human_input_mode: str = "NEVER"
     max_consecutive_auto_reply: int = 10
     system_message: Optional[str] = None
@@ -93,11 +94,34 @@ class AgentConfig(SQLModel, table=False):
     default_auto_reply: Optional[str] = ""
     description: Optional[str] = None
 
+    agents: Optional[List["Agent"]] = Field(default_factory=list)
+    admin_name: Optional[str] = "Admin"
+    messages: Optional[List[Dict]] = Field(default_factory=list)
+    max_round: Optional[int] = 10
+    admin_name: Optional[str] = "Admin"
+    speaker_selection_method: Optional[str] = "auto"
+    allow_repeat_speaker: Optional[Union[bool, List["AgentConfig"]]] = True
+
 
 class AgentType(str, Enum):
     assistant = "assistant"
     userproxy = "userproxy"
     groupchat = "groupchat"
+
+
+class WorkflowAgentTypes(str, Enum):
+    sender = "sender"
+    receiver = "receiver"
+    planner = "planner"
+
+
+class WorkflowAgentLink(SQLModel, table=True):
+    workflow_id: int = Field(default=None, primary_key=True,
+                             foreign_key="workflow.id")
+    agent_id: int = Field(default=None, primary_key=True,
+                          foreign_key="agent.id")
+    link_type: WorkflowAgentTypes = Field(
+        default=WorkflowAgentTypes.sender, sa_column=Column(SqlEnum(WorkflowAgentTypes)))
 
 
 class Agent(SQLModel, table=True):
@@ -115,26 +139,8 @@ class Agent(SQLModel, table=True):
         back_populates="agents", link_model=AgentSkillLink)
     models: List[Model] = Relationship(
         back_populates="agents", link_model=AgentModelLink)
-
-
-class GroupChatConfig(SQLModel, table=False):
-    agents: List[Agent] = Field(default_factory=list)
-    admin_name: str = "Admin"
-    messages: List[Dict] = Field(default_factory=list)
-    max_round: Optional[int] = 10
-    admin_name: Optional[str] = "Admin"
-    speaker_selection_method: Optional[str] = "auto"
-    allow_repeat_speaker: Optional[Union[bool, List[AgentConfig]]] = True
-
-
-class GroupChat(SQLModel, table=False):
-    type: str = "groupchat"
-    config: AgentConfig = Field(
-        default_factory=AgentConfig, sa_column=Column(JSON))
-    groupchat_config: Optional[GroupChatConfig] = Field(
-        default_factory=GroupChatConfig, sa_column=Column(JSON))
-    skills: Optional[List[Skill]] = Field(
-        default_factory=list, sa_column=Column(JSON))
+    workflows: List["Workflow"] = Relationship(
+        link_model=WorkflowAgentLink, back_populates="agents")
 
 
 class WorkFlowType(str, Enum):
@@ -157,11 +163,9 @@ class Workflow(SQLModel, table=True):
     user_id: Optional[str] = None
     name: str
     description: str
-    sender: Agent = Field(default_factory=Agent, sa_column=Column(JSON))
-    receiver: Union[Agent, GroupChat] = Field(
-        default_factory=Union[Agent, GroupChat], sa_column=Column(JSON))
+    agents: List[Agent] = Relationship(
+        back_populates="workflows", link_model=WorkflowAgentLink)
     type: WorkFlowType = Field(default=WorkFlowType.twoagents,
                                sa_column=Column(SqlEnum(WorkFlowType)))
-    # summary_method: Optional[Literal["last", "none", "llm"]] = "last"
     summary_method: Optional[WorkFlowSummaryMethod] = Field(
         default=WorkFlowSummaryMethod.last, sa_column=Column(SqlEnum(WorkFlowSummaryMethod)))

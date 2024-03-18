@@ -423,7 +423,7 @@ export const getSampleSkill = () => {
       plt.close(fig)`;
 
   const skill: ISkill = {
-    title: "save_cat_ascii_art_to_png",
+    name: "save_cat_ascii_art_to_png",
     description: "save cat ascii art to png",
     content: content,
   };

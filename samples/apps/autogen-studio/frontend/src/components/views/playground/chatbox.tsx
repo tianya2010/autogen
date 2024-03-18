@@ -86,9 +86,6 @@ const ChatBox = ({
 
   const messages = useConfigStore((state) => state.messages);
   const setMessages = useConfigStore((state) => state.setMessages);
-  const workflowConfig: IFlowConfig | null = useConfigStore(
-    (state) => state.workflowConfig
-  );
 
   let pageHeight, chatMaxHeight;
   if (typeof window !== "undefined") {
@@ -403,27 +400,21 @@ const ChatBox = ({
     const messagePayload: IMessage = {
       role: "user",
       content: query,
-      msg_id: userMessage.msg_id,
       user_id: user?.email || "",
-      root_msg_id: "0",
-      session_id: session?.id || "",
+      session_id: session?.id,
+      workflow_id: session?.workflow_id,
+      connection_id: connectionId,
     };
 
     const textUrl = `${serverUrl}/messages`;
-    const postBody = {
-      message: messagePayload,
-      workflow: workflowConfig,
-      session: session,
-      user_id: user?.email,
-      connection_id: connectionId,
-    };
+
     const postData = {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(postBody),
+      body: JSON.stringify(messagePayload),
     };
     setLoading(true);
 
@@ -433,7 +424,7 @@ const ChatBox = ({
       wsClient.current.send(
         JSON.stringify({
           connection_id: connectionId,
-          data: postBody,
+          data: messagePayload,
           type: "user_message",
         })
       );
@@ -508,7 +499,7 @@ const ChatBox = ({
         className=" absolute right-0  text-secondary -top-8 rounded p-2"
       >
         {" "}
-        <div className="text-xs"> {session?.flow_config.name}</div>
+        <div className="text-xs"> {session?.name}</div>
       </div>
 
       <div

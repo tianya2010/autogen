@@ -1,21 +1,18 @@
 import {
   ChatBubbleLeftRightIcon,
-  CheckIcon,
   GlobeAltIcon,
-  PencilIcon,
   PlusIcon,
   Square3Stack3DIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Button, Dropdown, MenuProps, Modal, message } from "antd";
+import { Button, Dropdown, Input, MenuProps, Modal, message } from "antd";
 import * as React from "react";
-import { IChatSession, IStatus } from "../../types";
+import { IChatSession, IFlowConfig, IStatus } from "../../types";
 import { appContext } from "../../../hooks/provider";
-import { fetchJSON, getServerUrl, timeAgo, truncateText } from "../../utils";
+import { fetchJSON, getServerUrl, timeAgo } from "../../utils";
 import { LaunchButton, LoadingOverlay } from "../../atoms";
 import { useConfigStore } from "../../../hooks/store";
-import AgentsWorkflowView from "./workflows";
-import { text } from "stream/consumers";
+import WorkflowSelector from "./workflows";
 
 const SessionsView = ({}: any) => {
   const [loading, setLoading] = React.useState(false);
@@ -30,20 +27,20 @@ const SessionsView = ({}: any) => {
   const createSessionUrl = `${serverUrl}/sessions`;
   const renameSessionUrl = `${serverUrl}/sessions/rename?name=`;
   const publishSessionUrl = `${serverUrl}/sessions/publish`;
-  const deleteSessionUrl = `${serverUrl}/sessions/delete`;
 
   const sessions = useConfigStore((state) => state.sessions);
-  const workflowConfig = useConfigStore((state) => state.workflowConfig);
+
   const setSessions = useConfigStore((state) => state.setSessions);
   // const [session, setSession] =
   //   React.useState<IChatSession | null>(null);
   const session = useConfigStore((state) => state.session);
   const setSession = useConfigStore((state) => state.setSession);
-  const setWorkflowConfig = useConfigStore((state) => state.setWorkflowConfig);
+
   const deleteSession = (session: IChatSession) => {
     setError(null);
     setLoading(true);
     // const fetch;
+    const deleteSessionUrl = `${serverUrl}/sessions/delete?user_id=${user?.email}&session_id=${session.id}`;
     const payLoad = {
       method: "DELETE",
       headers: {
@@ -146,40 +143,28 @@ const SessionsView = ({}: any) => {
     if (sessions && sessions.length > 0) {
       const firstSession = sessions[0];
       setSession(firstSession);
-      setWorkflowConfig(firstSession?.flow_config);
     } else {
       setSession(null);
     }
   }, [sessions]);
 
-  const createSession = () => {
+  const createSession = (session: IChatSession) => {
     setError(null);
     setLoading(true);
 
-    const body = {
-      user_id: user?.email,
-      session: {
-        user_id: user?.email,
-        flow_config: workflowConfig,
-        session_id: null,
-      },
-    };
     // const fetch;
     const payLoad = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(session),
     };
-
-    console.log("createSession", payLoad);
 
     const onSuccess = (data: any) => {
       if (data && data.status) {
         message.success(data.message);
         setSessions(data.data);
-        setWorkflowConfig(data.data[0]?.workflow_config);
       } else {
         message.error(data.message);
       }
@@ -193,42 +178,42 @@ const SessionsView = ({}: any) => {
     fetchJSON(createSessionUrl, payLoad, onSuccess, onError);
   };
 
-  const renameSession = (session: IChatSession, name: string) => {
-    setError(null);
-    setLoading(true);
+  // const renameSession = (session: IChatSession, name: string) => {
+  //   setError(null);
+  //   setLoading(true);
 
-    const body = {
-      user_id: user?.email,
-      session: session,
-    };
-    // const fetch;
-    const payLoad = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    };
+  //   const body = {
+  //     user_id: user?.email,
+  //     session: session,
+  //   };
+  //   // const fetch;
+  //   const payLoad = {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify(body),
+  //   };
 
-    console.log("renameSession to " + name, payLoad);
+  //   console.log("renameSession to " + name, payLoad);
 
-    const onSuccess = (data: any) => {
-      if (data && data.status) {
-        message.success(data.message);
-        setSessions(data.data);
-        setWorkflowConfig(data.data[0]?.workflow_config);
-      } else {
-        message.error(data.message);
-      }
-      setLoading(false);
-    };
-    const onError = (err: any) => {
-      setError(err);
-      message.error(err.message);
-      setLoading(false);
-    };
-    fetchJSON(renameSessionUrl+name, payLoad, onSuccess, onError);
-  }
+  //   const onSuccess = (data: any) => {
+  //     if (data && data.status) {
+  //       message.success(data.message);
+  //       setSessions(data.data);
+  //       setWorkflowConfig(data.data[0]?.workflow_config);
+  //     } else {
+  //       message.error(data.message);
+  //     }
+  //     setLoading(false);
+  //   };
+  //   const onError = (err: any) => {
+  //     setError(err);
+  //     message.error(err.message);
+  //     setLoading(false);
+  //   };
+  //   fetchJSON(renameSessionUrl + name, payLoad, onSuccess, onError);
+  // };
 
   React.useEffect(() => {
     if (user) {
@@ -237,23 +222,28 @@ const SessionsView = ({}: any) => {
     }
   }, []);
 
-  const [renameMenu, setRenameMenu] = React.useState<{[key: string]: {visible: number, nameValue: string}}>({});
+  const [renameMenu, setRenameMenu] = React.useState<{
+    [key: string]: { visible: number; nameValue: string };
+  }>({});
   const sessionRows = sessions.map((data: IChatSession, index: number) => {
     const isSelected = session?.id === data.id;
     const rowClass = isSelected
       ? "bg-accent text-white"
       : "bg-secondary text-primary";
-    const handleRename = (event: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("handleRename", event.target.value);
-      setRenameMenu({...renameMenu, [data.id]: {...renameMenu[data.id], nameValue: event.target.value}});
-    }
-    const submitRename = (event: React.FormEvent<HTMLFormElement>) => {
-      const newNameValue = renameMenu[data.id]?.nameValue || '';
-      event.preventDefault();
-      console.log("submitRename", newNameValue);
-      setRenameMenu({...setRenameMenu, [data.id]: 0});
-      renameSession(data, newNameValue);
-    }
+    // const handleRename = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //   console.log("handleRename", event.target.value);
+    //   setRenameMenu({
+    //     ...renameMenu,
+    //     [data.id]: { ...renameMenu[data.id], nameValue: event.target.value },
+    //   });
+    // };
+    // const submitRename = (event: React.FormEvent<HTMLFormElement>) => {
+    //   const newNameValue = renameMenu[data.id]?.nameValue || "";
+    //   event.preventDefault();
+    //   console.log("submitRename", newNameValue);
+    //   setRenameMenu({ ...setRenameMenu, [data.id]: 0 });
+    //   renameSession(data, newNameValue);
+    // };
 
     let items: MenuProps["items"] = [
       {
@@ -292,24 +282,27 @@ const SessionsView = ({}: any) => {
         ),
         key: "publish",
       },
-      {
-        label: (
-          <div
-            onClick={() => {
-              console.log("renaming session");
-              setRenameMenu({...setRenameMenu, [data.id]: {...renameMenu[data.id], visible: 1}});
-            }}
-          >
-            <PencilIcon
-              role={"button"}
-              title={"Rename"}
-              className="h-4 w-4 mr-1 inline-block"
-            />
-            Rename
-          </div>
-        ),
-        key: "rename",
-      },
+      // {
+      //   label: (
+      //     <div
+      //       onClick={() => {
+      //         console.log("renaming session");
+      //         setRenameMenu({
+      //           ...setRenameMenu,
+      //           [data.id]: { ...renameMenu[data.id], visible: 1 },
+      //         });
+      //       }}
+      //     >
+      //       <PencilIcon
+      //         role={"button"}
+      //         title={"Rename"}
+      //         className="h-4 w-4 mr-1 inline-block"
+      //       />
+      //       Rename
+      //     </div>
+      //   ),
+      //   key: "rename",
+      // },
     ];
 
     items.push();
@@ -329,10 +322,10 @@ const SessionsView = ({}: any) => {
       </Dropdown>
     );
 
-    let displayName = data.id;
-    if (data.name != null) {
-      displayName = data.name
-    }
+    // let displayName = data.id;
+    // if (data.name != null) {
+    //   displayName = data.name;
+    // }
     return (
       <div
         key={"sessionsrow" + index}
@@ -348,23 +341,44 @@ const SessionsView = ({}: any) => {
           role="button"
           onClick={() => {
             setSession(data);
-            setWorkflowConfig(data.flow_config);
+            // setWorkflowConfig(data.flow_config);
           }}
         >
-          {(!renameMenu[data.id] || renameMenu[data.id]?.visible == 0) && (<div className="text-xs">{truncateText(displayName, 20)}</div>)}
-          {(renameMenu[data.id]?.visible == 1) && (
+          {/* {(!renameMenu[data.id] || renameMenu[data.id]?.visible == 0) && (
+            <div className="text-xs">{truncateText(displayName, 20)}</div>
+          )}
+          {renameMenu[data.id]?.visible == 1 && (
             <form onSubmit={submitRename}>
-              <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                <input id={`renameInputText-${data.id}`} type="text" value={renameMenu[data.id]?.nameValue} onChange={handleRename} style={{color: 'black'}}/>
-                <button type="submit"><CheckIcon role={"button"} className="h-5 w-5 ml-1 inline-block"/></button>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  id={`renameInputText-${data.id}`}
+                  type="text"
+                  value={renameMenu[data.id]?.nameValue}
+                  onChange={handleRename}
+                  style={{ color: "black" }}
+                />
+                <button type="submit">
+                  <CheckIcon
+                    role={"button"}
+                    className="h-5 w-5 ml-1 inline-block"
+                  />
+                </button>
               </div>
             </form>
-          )}
+          )} */}
           <div className="text-xs mt-1">
             <Square3Stack3DIcon className="h-4 w-4 inline-block mr-1" />
-            {data.flow_config.name}
+            {data.name}
           </div>
-          <div className="text-xs text-right ">{timeAgo(data.timestamp)}</div>
+          <div className="text-xs text-right ">
+            {timeAgo(data.created_at || "")}
+          </div>
         </div>
       </div>
     );
@@ -376,13 +390,37 @@ const SessionsView = ({}: any) => {
     skillsMaxHeight = windowHeight - 400 + "px";
   }
 
-  return (
-    <div className="  ">
+  const NewSessionModal = () => {
+    const [workflow, setWorkflow] = React.useState<IFlowConfig | null>(null);
+    const [localSession, setLocalSession] = React.useState<IChatSession>({
+      user_id: user?.email || "",
+      workflow_id: workflow?.id,
+      name:
+        "New Session " +
+        new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        }),
+    });
+
+    React.useEffect(() => {
+      if (workflow && workflow.id) {
+        setLocalSession({ ...localSession, workflow_id: workflow.id });
+      }
+    }, [workflow]);
+
+    return (
       <Modal
+        onCancel={() => {
+          setNewSessionModalVisible(false);
+        }}
         title={
           <div className="font-semibold mb-2 pb-1 border-b">
             <Square3Stack3DIcon className="h-5 w-5 inline-block mr-1" />
-            New Sessions{" "}
+            New Session{" "}
           </div>
         }
         open={newSessionModalVisible}
@@ -398,18 +436,32 @@ const SessionsView = ({}: any) => {
           <Button
             key="submit"
             type="primary"
-            disabled={!workflowConfig}
+            disabled={!workflow}
             onClick={() => {
               setNewSessionModalVisible(false);
-              createSession();
+              createSession(localSession);
             }}
           >
             Create
           </Button>,
         ]}
       >
-        <AgentsWorkflowView />
+        <WorkflowSelector workflow={workflow} setWorkflow={setWorkflow} />
+        <div className="my-2 text-xs"> Session Name </div>
+        <Input
+          placeholder="Session Name"
+          value={localSession.name}
+          onChange={(event) => {
+            setLocalSession({ ...localSession, name: event.target.value });
+          }}
+        />
       </Modal>
+    );
+  };
+
+  return (
+    <div className="  ">
+      <NewSessionModal />
       <div className="mb-2 relative">
         <div className="">
           <div className="font-semibold mb-2 pb-1 border-b">
@@ -442,11 +494,6 @@ const SessionsView = ({}: any) => {
           <LaunchButton
             className="text-sm p-2 px-3"
             onClick={() => {
-              if (sessions && sessions.length > 0) {
-                setWorkflowConfig(sessions[0]?.flow_config);
-              } else {
-                setWorkflowConfig(null);
-              }
               setNewSessionModalVisible(true);
             }}
           >
