@@ -1,16 +1,29 @@
 from enum import Enum
 from typing import Any, Callable, Dict, Literal, Optional, Union, List
-from sqlmodel import JSON, Column, DateTime, Field, SQLModel, func, Relationship, Enum as SqlEnum
+from sqlmodel import (
+    JSON,
+    Column,
+    DateTime,
+    Field,
+    SQLModel,
+    func,
+    Relationship,
+    Enum as SqlEnum,
+)
 from datetime import datetime
 from sqlalchemy import orm
 
 
 class Message(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
     role: str
     content: str
@@ -22,10 +35,14 @@ class Message(SQLModel, table=True):
 
 class Session(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
     workflow_id: Optional[int] = Field(default=None, foreign_key="workflow.id")
     name: Optional[str] = None
@@ -33,25 +50,25 @@ class Session(SQLModel, table=True):
 
 
 class AgentSkillLink(SQLModel, table=True):
-    agent_id: int = Field(default=None, primary_key=True,
-                          foreign_key="agent.id")
-    skill_id: int = Field(default=None, primary_key=True,
-                          foreign_key="skill.id")
+    agent_id: int = Field(default=None, primary_key=True, foreign_key="agent.id")
+    skill_id: int = Field(default=None, primary_key=True, foreign_key="skill.id")
 
 
 class AgentModelLink(SQLModel, table=True):
-    agent_id: int = Field(default=None, primary_key=True,
-                          foreign_key="agent.id")
-    modele_id: int = Field(default=None, primary_key=True,
-                           foreign_key="model.id")
+    agent_id: int = Field(default=None, primary_key=True, foreign_key="agent.id")
+    modele_id: int = Field(default=None, primary_key=True, foreign_key="model.id")
 
 
 class Skill(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.now, sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default_factory=datetime.now, sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
     name: str
     content: str
@@ -59,15 +76,20 @@ class Skill(SQLModel, table=True):
     secrets: Optional[Dict] = Field(default={}, sa_column=Column(JSON))
     libraries: Optional[Dict] = Field(default={}, sa_column=Column(JSON))
     agents: List["Agent"] = Relationship(
-        back_populates="skills", link_model=AgentSkillLink)
+        back_populates="skills", link_model=AgentSkillLink
+    )
 
 
 class Model(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
     model: str
     api_key: Optional[str] = None
@@ -80,7 +102,8 @@ class Model(SQLModel, table=True):
     timeout: Optional[int] = None
     max_tokens: Optional[int] = None
     agents: List["Agent"] = Relationship(
-        back_populates="models", link_model=AgentModelLink)
+        back_populates="models", link_model=AgentModelLink
+    )
 
 
 class AgentConfig(SQLModel, table=False):
@@ -90,7 +113,8 @@ class AgentConfig(SQLModel, table=False):
     system_message: Optional[str] = None
     is_termination_msg: Optional[Union[bool, str, Callable]] = None
     code_execution_config: Optional[Union[bool, Dict]] = Field(
-        default=False, sa_column=Column(JSON))
+        default=False, sa_column=Column(JSON)
+    )
     default_auto_reply: Optional[str] = ""
     description: Optional[str] = None
 
@@ -116,31 +140,37 @@ class WorkflowAgentTypes(str, Enum):
 
 
 class WorkflowAgentLink(SQLModel, table=True):
-    workflow_id: int = Field(default=None, primary_key=True,
-                             foreign_key="workflow.id")
-    agent_id: int = Field(default=None, primary_key=True,
-                          foreign_key="agent.id")
+    workflow_id: int = Field(default=None, primary_key=True, foreign_key="workflow.id")
+    agent_id: int = Field(default=None, primary_key=True, foreign_key="agent.id")
     link_type: WorkflowAgentTypes = Field(
-        default=WorkflowAgentTypes.sender, sa_column=Column(SqlEnum(WorkflowAgentTypes)))
+        default=WorkflowAgentTypes.sender, sa_column=Column(SqlEnum(WorkflowAgentTypes))
+    )
 
 
 class Agent(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
-    type: AgentType = Field(default=AgentType.assistant,
-                            sa_column=Column(SqlEnum(AgentType)))
-    config: AgentConfig = Field(
-        default_factory=AgentConfig, sa_column=Column(JSON))
+    type: AgentType = Field(
+        default=AgentType.assistant, sa_column=Column(SqlEnum(AgentType))
+    )
+    config: AgentConfig = Field(default_factory=AgentConfig, sa_column=Column(JSON))
     skills: List[Skill] = Relationship(
-        back_populates="agents", link_model=AgentSkillLink)
+        back_populates="agents", link_model=AgentSkillLink
+    )
     models: List[Model] = Relationship(
-        back_populates="agents", link_model=AgentModelLink)
+        back_populates="agents", link_model=AgentModelLink
+    )
     workflows: List["Workflow"] = Relationship(
-        link_model=WorkflowAgentLink, back_populates="agents")
+        link_model=WorkflowAgentLink, back_populates="agents"
+    )
 
 
 class WorkFlowType(str, Enum):
@@ -156,16 +186,24 @@ class WorkFlowSummaryMethod(str, Enum):
 
 class Workflow(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), server_default=func.now()))  # pylint: disable=not-callable
-    updated_at: datetime = Field(default=datetime.now(), sa_column=Column(
-        DateTime(timezone=True), onupdate=func.now()))  # pylint: disable=not-callable
+    created_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )  # pylint: disable=not-callable
+    updated_at: datetime = Field(
+        default=datetime.now(),
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
+    )  # pylint: disable=not-callable
     user_id: Optional[str] = None
     name: str
     description: str
     agents: List[Agent] = Relationship(
-        back_populates="workflows", link_model=WorkflowAgentLink)
-    type: WorkFlowType = Field(default=WorkFlowType.twoagents,
-                               sa_column=Column(SqlEnum(WorkFlowType)))
+        back_populates="workflows", link_model=WorkflowAgentLink
+    )
+    type: WorkFlowType = Field(
+        default=WorkFlowType.twoagents, sa_column=Column(SqlEnum(WorkFlowType))
+    )
     summary_method: Optional[WorkFlowSummaryMethod] = Field(
-        default=WorkFlowSummaryMethod.last, sa_column=Column(SqlEnum(WorkFlowSummaryMethod)))
+        default=WorkFlowSummaryMethod.last,
+        sa_column=Column(SqlEnum(WorkFlowSummaryMethod)),
+    )
