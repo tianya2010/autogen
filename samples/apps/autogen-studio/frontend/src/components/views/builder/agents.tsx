@@ -19,13 +19,13 @@ import {
   truncateText,
 } from "../../utils";
 import {
-  AgentFlowSpecView,
   BounceLoader,
   Card,
   CardHoverBar,
   LaunchButton,
   LoadingOverlay,
 } from "../../atoms";
+import { AgentFlowSpecView } from "./utils";
 
 const AgentsView = ({}: any) => {
   const [loading, setLoading] = React.useState(false);
@@ -272,6 +272,7 @@ const AgentsView = ({}: any) => {
           setAgent(null);
           setShowAgentModal(false);
         }}
+        footer={[]}
       >
         {agent && (
           <AgentFlowSpecView
